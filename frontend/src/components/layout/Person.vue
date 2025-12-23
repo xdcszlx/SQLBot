@@ -4,24 +4,19 @@ import Default_avatar_custom from '@/assets/img/Default-avatar.svg'
 import icon_admin_outlined from '@/assets/svg/icon_admin_outlined.svg'
 import icon_info_outlined_1 from '@/assets/svg/icon_info_outlined_1.svg'
 import { useAppearanceStoreWithOut } from '@/stores/appearance'
-import icon_maybe_outlined from '@/assets/svg/icon-maybe_outlined.svg'
 import icon_key_outlined from '@/assets/svg/icon-key_outlined.svg'
-import icon_translate_outlined from '@/assets/svg/icon_translate_outlined.svg'
 import icon_logout_outlined from '@/assets/svg/icon_logout_outlined.svg'
-import icon_right_outlined from '@/assets/svg/icon_right_outlined.svg'
 import AboutDialog from '@/components/about/index.vue'
-import icon_done_outlined from '@/assets/svg/icon_done_outlined.svg'
 import { useI18n } from 'vue-i18n'
 import PwdForm from './PwdForm.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { userApi } from '@/api/auth'
 
 const router = useRouter()
 const appearanceStore = useAppearanceStoreWithOut()
 const userStore = useUserStore()
 const pwdFormRef = ref()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 defineProps({
   collapse: { type: [Boolean], required: true },
   inSysmenu: { type: [Boolean], required: true },
@@ -29,45 +24,15 @@ defineProps({
 
 const name = computed(() => userStore.getName)
 const account = computed(() => userStore.getAccount)
-const currentLanguage = computed(() => userStore.getLanguage)
 const isAdmin = computed(() => userStore.isAdmin)
 const isLocalUser = computed(() => !userStore.getOrigin)
 const dialogVisible = ref(false)
 const aboutRef = ref()
-const languageList = computed(() => [
-  {
-    name: 'English',
-    value: 'en',
-  },
-  {
-    name: '简体中文',
-    value: 'zh-CN',
-  },
-  {
-    name: '한국인',
-    value: 'ko-KR',
-  },
-])
 const popoverRef = ref()
 
 const toSystem = () => {
   popoverRef.value.hide()
   router.push('/system')
-}
-
-const changeLanguage = (lang: string) => {
-  locale.value = lang
-  userStore.setLanguage(lang)
-  const param = {
-    language: lang,
-  }
-  userApi.language(param).then(() => {
-    window.location.reload()
-  })
-}
-
-const openHelp = () => {
-  window.open(appearanceStore.getHelp || 'https://dataease.cn/sqlbot/', '_blank')
 }
 
 const openPwd = () => {
@@ -126,44 +91,11 @@ const logout = async () => {
           </el-icon>
           <div class="datasource-name">{{ $t('user.change_password') }}</div>
         </div>
-        <el-popover :teleported="false" popper-class="system-language" placement="right">
-          <template #reference>
-            <div class="popover-item">
-              <el-icon size="16">
-                <icon_translate_outlined></icon_translate_outlined>
-              </el-icon>
-              <div class="datasource-name">{{ $t('common.language') }}</div>
-              <el-icon class="right" size="16">
-                <icon_right_outlined></icon_right_outlined>
-              </el-icon>
-            </div>
-          </template>
-          <div class="language-popover">
-            <div
-              v-for="ele in languageList"
-              :key="ele.name"
-              class="popover-item_language"
-              :class="currentLanguage === ele.value && 'isActive'"
-              @click="changeLanguage(ele.value)"
-            >
-              <div class="language-name">{{ ele.name }}</div>
-              <el-icon size="16" class="done">
-                <icon_done_outlined></icon_done_outlined>
-              </el-icon>
-            </div>
-          </div>
-        </el-popover>
         <div v-if="appearanceStore.getShowAbout" class="popover-item" @click="toAbout">
           <el-icon size="16">
             <icon_info_outlined_1></icon_info_outlined_1>
           </el-icon>
           <div class="datasource-name">{{ $t('about.title') }}</div>
-        </div>
-        <div v-if="appearanceStore.getShowDoc" class="popover-item" @click="openHelp">
-          <el-icon size="16">
-            <icon_maybe_outlined></icon_maybe_outlined>
-          </el-icon>
-          <div class="datasource-name">{{ $t('common.help') }}</div>
         </div>
         <div style="height: 4px; width: 100%"></div>
         <div class="popover-item mr4" @click="logout">
@@ -331,51 +263,6 @@ const logout = async () => {
 
       .right {
         margin-left: auto;
-      }
-    }
-  }
-}
-
-.system-language.system-language {
-  padding: 4px 4px 2px 4px;
-  width: 240px !important;
-  box-shadow: 0px 4px 8px 0px #1f23291a;
-  border: 1px solid #dee0e3;
-
-  .language-popover {
-    .popover-item_language {
-      height: 32px;
-      display: flex;
-      align-items: center;
-      padding-left: 8px;
-      padding-right: 8px;
-      margin-bottom: 2px;
-      position: relative;
-      border-radius: 4px;
-      cursor: pointer;
-      &:not(.empty):hover {
-        background: #1f23291a;
-      }
-
-      .language-name {
-        margin-left: 8px;
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 22px;
-        margin-bottom: 2px;
-      }
-
-      .done {
-        margin-left: auto;
-        display: none;
-      }
-
-      &.isActive {
-        color: var(--ed-color-primary);
-
-        .done {
-          display: block;
-        }
       }
     }
   }

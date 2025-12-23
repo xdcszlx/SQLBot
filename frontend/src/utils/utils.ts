@@ -104,7 +104,7 @@ export const isBtnShow = (val: string) => {
 }
 
 export const setTitle = (title?: string) => {
-  document.title = title || 'SQLBot'
+  document.title = title || '测控领域智能问数系统'
 }
 
 function rgbToHex(r: any, g: any, b: any) {

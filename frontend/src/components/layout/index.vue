@@ -4,7 +4,7 @@
       class="main-menu"
       :class="{ 'main-menu-sidebar': !topLayout, 'main-menu-topbar': topLayout }"
     >
-      <div class="logo">SQLBot</div>
+      <div class="logo">测控领域智能问数系统</div>
 
       <!-- <div v-if="!topLayout || !showSubmenu"
            :class="{ 'workspace-area': !topLayout, 'topbar-workspace-area': topLayout }">
@@ -81,9 +81,6 @@
             <el-dropdown-menu>
               <el-dropdown-item @click="switchLayout">Switch Layout</el-dropdown-item>
               <el-dropdown-item @click="logout">Logout</el-dropdown-item>
-              <el-dropdown-item>
-                <language-selector />
-              </el-dropdown-item>
               <el-dropdown-item @click="toAbout">About</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -114,9 +111,6 @@
                 <el-dropdown-menu>
                   <el-dropdown-item @click="switchLayout">Switch Layout</el-dropdown-item>
                   <el-dropdown-item @click="logout">Logout</el-dropdown-item>
-                  <el-dropdown-item>
-                    <language-selector />
-                  </el-dropdown-item>
                   <el-dropdown-item @click="toAbout">About</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -172,7 +166,6 @@ import icon_ai from '@/assets/svg/icon_ai.svg'
 import { ArrowLeftBold } from '@element-plus/icons-vue'
 import { useCache } from '@/utils/useCache'
 import { useI18n } from 'vue-i18n'
-import LanguageSelector from '@/components/Language-selector/index.vue'
 import AboutDialog from '@/components/about/index.vue'
 
 const aboutRef = ref()
