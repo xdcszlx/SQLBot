@@ -3,8 +3,38 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from apps.dashboard.crud.dashboard_service import list_resource, load_resource, \
     create_resource, create_canvas, validate_name, delete_resource, update_resource, update_canvas
 from apps.dashboard.models.dashboard_model import CreateDashboard, BaseDashboard, QueryDashboard, DashboardResponse
-from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
-from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+try:
+    from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
+    from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+except (ImportError, ModuleNotFoundError):
+    class _DummyEnum:
+        def __getattr__(self, item):
+            return item
+
+    OperationType = _DummyEnum()
+    OperationDetails = _DummyEnum()
+    OperationModules = _DummyEnum()
+
+    class LogConfig:
+        def __init__(
+            self,
+            operation_type=None,
+            operation_detail=None,
+            module=None,
+            resource_id_expr=None,
+            result_id_expr=None,
+        ):
+            self.operation_type = operation_type
+            self.operation_detail = operation_detail
+            self.module = module
+            self.resource_id_expr = resource_id_expr
+            self.result_id_expr = result_id_expr
+
+    def system_log(config: "LogConfig"):
+        def decorator(func):
+            return func
+        return decorator
+
 from common.core.deps import SessionDep, CurrentUser
 
 router = APIRouter(tags=["dashboard"], prefix="/dashboard")

@@ -871,7 +871,8 @@ class LLMService:
     def save_sql_data(self, session: Session, data_obj: Dict[str, Any]):
         try:
             data_result = data_obj.get('data')
-            limit = 1000
+            # limit = 1000
+            limit = 12000 #20251222修改限制为12000个点（约10分钟）
             if data_result:
                 data_result = prepare_for_orjson(data_result)
                 if data_result and len(data_result) > limit and self.enable_sql_row_limit:

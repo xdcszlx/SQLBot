@@ -21,8 +21,37 @@ from apps.system.schemas.permission import SqlbotPermission, require_permissions
 from common.core.deps import CurrentAssistant, SessionDep, CurrentUser, Trans
 from common.utils.command_utils import parse_quick_command
 from common.utils.data_format import DataFormat
-from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
-from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+try:
+    from sqlbot_xpack.audit.models.log_model import OperationType, OperationDetails, OperationModules
+    from sqlbot_xpack.audit.schemas.logger_decorator import system_log, LogConfig
+except (ImportError, ModuleNotFoundError):
+    class _DummyEnum:
+        def __getattr__(self, item):
+            return item
+
+    OperationType = _DummyEnum()
+    OperationDetails = _DummyEnum()
+    OperationModules = _DummyEnum()
+
+    class LogConfig:
+        def __init__(
+            self,
+            operation_type=None,
+            operation_detail=None,
+            module=None,
+            resource_id_expr=None,
+            result_id_expr=None,
+        ):
+            self.operation_type = operation_type
+            self.operation_detail = operation_detail
+            self.module = module
+            self.resource_id_expr = resource_id_expr
+            self.result_id_expr = result_id_expr
+
+    def system_log(config: "LogConfig"):
+        def decorator(func):
+            return func
+        return decorator
 
 router = APIRouter(tags=["Data Q&A"], prefix="/chat")
 

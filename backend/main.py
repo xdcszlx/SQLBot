@@ -1,7 +1,13 @@
 import os
 from typing import Dict, Any
 
-import sqlbot_xpack
+try:
+    import sqlbot_xpack
+    SQLBOT_XPACK_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    sqlbot_xpack = None
+    SQLBOT_XPACK_AVAILABLE = False
+
 from alembic.config import Config
 from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
@@ -21,7 +27,16 @@ from apps.system.crud.aimodel_manage import async_model_info
 from apps.system.crud.assistant import init_dynamic_cors
 from apps.system.middleware.auth import TokenMiddleware
 from apps.system.schemas.permission import RequestContextMiddleware
-from sqlbot_xpack.audit.schemas.request_context import RequestContextMiddlewareCommon
+
+try:
+    from sqlbot_xpack.audit.schemas.request_context import RequestContextMiddlewareCommon
+except (ImportError, ModuleNotFoundError):
+    # Fallback: empty middleware when xpack audit module not available
+    from starlette.middleware.base import BaseHTTPMiddleware
+    
+    class RequestContextMiddlewareCommon(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            return await call_next(request)
 from common.core.config import settings
 from common.core.response_middleware import ResponseMiddleware, exception_handler
 from common.core.sqlbot_cache import init_sqlbot_cache
@@ -56,9 +71,13 @@ async def lifespan(app: FastAPI):
     init_data_training_embedding_data()
     init_table_and_ds_embedding()
     SQLBotLogUtil.info("✅ SQLBot 初始化完成")
-    await sqlbot_xpack.core.clean_xpack_cache()
+    if SQLBOT_XPACK_AVAILABLE and hasattr(sqlbot_xpack, 'core'):
+        if hasattr(sqlbot_xpack.core, 'clean_xpack_cache'):
+            await sqlbot_xpack.core.clean_xpack_cache()
     await async_model_info()  # 异步加密已有模型的密钥和地址
-    await sqlbot_xpack.core.monitor_app(app)
+    if SQLBOT_XPACK_AVAILABLE and hasattr(sqlbot_xpack, 'core'):
+        if hasattr(sqlbot_xpack.core, 'monitor_app'):
+            await sqlbot_xpack.core.monitor_app(app)
     yield
     SQLBotLogUtil.info("SQLBot 应用关闭")
 
@@ -211,7 +230,8 @@ app.add_exception_handler(Exception, exception_handler.global_exception_handler)
 
 mcp.setup_server()
 
-sqlbot_xpack.init_fastapi_app(app)
+if SQLBOT_XPACK_AVAILABLE and hasattr(sqlbot_xpack, 'init_fastapi_app'):
+    sqlbot_xpack.init_fastapi_app(app)
 if __name__ == "__main__":
     import uvicorn
 

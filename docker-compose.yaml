@@ -1,14 +1,15 @@
 services:
   sqlbot:
-    image: dataease/sqlbot
+    build: .              # 使用当前仓库的 Dockerfile 构建镜像
+    image: sqlbot-local   # 自定义一个本地镜像名
     container_name: sqlbot
     restart: always
     privileged: true
     networks:
       - sqlbot-network
     ports:
-      - 8000:8000
-      - 8001:8001
+      - 9900:8000
+      - 9901:8001
     environment:
       # Database configuration
       POSTGRES_SERVER: localhost

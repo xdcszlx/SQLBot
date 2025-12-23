@@ -9,7 +9,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN mkdir -p ${APP_HOME} ${UI_HOME}
 
 COPY frontend /tmp/frontend
-RUN cd /tmp/frontend && npm install && npm run build && mv dist ${UI_HOME}/dist
+RUN cd /tmp/frontend && \
+    npm config set registry https://registry.npmmirror.com && \
+    npm config set fund false && \
+    npm config set audit false && \
+    npm config set progress false && \
+    npm install && \
+    npm run build && \
+    mv dist ${UI_HOME}/dist
 
 
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS sqlbot-builder
@@ -22,6 +29,10 @@ ENV PYTHONPATH=${SQLBOT_HOME}/app
 ENV PATH="${APP_HOME}/.venv/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
+ENV UV_HTTP_TIMEOUT=600
+ENV UV_CONCURRENT_DOWNLOADS=4
+ENV UV_HTTP_RETRIES=5
+ENV UV_REQUEST_TIMEOUT=300
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Create necessary directories
@@ -40,8 +51,11 @@ RUN test -f "./uv.lock" && \
 COPY ./backend ${APP_HOME}
 
 # Final sync to ensure all dependencies are installed
+# Use retry logic for unstable network (especially for test.pypi.org)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra cpu
+    uv sync --extra cpu || \
+    (echo "First attempt failed, retrying..." && sleep 5 && uv sync --extra cpu) || \
+    (echo "Second attempt failed, final retry..." && sleep 10 && uv sync --extra cpu)
 
 # Build g2-ssr
 FROM registry.cn-qingdao.aliyuncs.com/dataease/sqlbot-base:latest AS ssr-builder
@@ -56,9 +70,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # configure npm
-RUN npm config set fund false \
-    && npm config set audit false \
-    && npm config set progress false
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fund false && \
+    npm config set audit false && \
+    npm config set progress false
 
 COPY g2-ssr/app.js g2-ssr/package.json /app/
 COPY g2-ssr/charts/* /app/charts/

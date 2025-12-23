@@ -1,36 +1,15 @@
 <script lang="ts" setup>
 import aboutBg from '@/assets/embedded/LOGO-about.png'
 
-import { ref, reactive, onMounted } from 'vue'
-import type { F2CLicense } from './index.ts'
+import { ref, onMounted } from 'vue'
 import { licenseApi } from '@/api/license'
-import { ElMessage } from 'element-plus-secondary'
 import { useI18n } from 'vue-i18n'
-import { useUserStore } from '@/stores/user.ts'
 const dialogVisible = ref(false)
 const { t } = useI18n()
-const userStore = useUserStore()
-const license: F2CLicense = reactive({
-  status: '',
-  corporation: '',
-  expired: '',
-  count: 0,
-  version: '',
-  edition: '',
-  serialNo: '',
-  remark: '',
-  isv: '',
-})
-const tipsSuffix = ref('')
 const build = ref('')
-const isAdmin = ref(false)
-const fileList = reactive([])
-const dynamicCardClass = ref('')
-const loading = ref(false)
+
 onMounted(() => {
-  isAdmin.value = userStore.getUid === '1'
   initVersion()
-  getLicenseInfo()
 })
 
 const initVersion = () => {
@@ -38,88 +17,9 @@ const initVersion = () => {
     build.value = res
   })
 }
-const beforeUpload = (file: any) => {
-  importLic(file)
-  return false
-}
-
-const getLicenseInfo = () => {
-  validateHandler((res: any) => {
-    const info = getLicense(res)
-    setLicense(info)
-  })
-}
-const setLicense = (lic: any) => {
-  const lic_obj = {
-    status: lic.status,
-    corporation: lic.corporation,
-    expired: lic.expired,
-    count: lic.count,
-    version: lic.version,
-    edition: lic.edition,
-    serialNo: lic.serialNo,
-    remark: lic.remark,
-    isv: lic.isv,
-  }
-  Object.assign(license, lic_obj)
-  if (license?.serialNo && license?.remark) {
-    dynamicCardClass.value = 'about-card-max'
-  } else if (!license?.serialNo && !license?.remark) {
-    dynamicCardClass.value = ''
-  } else {
-    dynamicCardClass.value = 'about-card-medium'
-  }
-}
-const removeDistributeModule = () => {
-  const key = 'xpack-model-distributed'
-  localStorage.removeItem(key)
-}
-const importLic = (file: any) => {
-  removeDistributeModule()
-  const reader = new FileReader()
-  reader.onload = function (e: any) {
-    const licKey = e.target.result
-    update(licKey)
-  }
-  reader.readAsText(file)
-}
-const validateHandler = (success: any) => {
-  licenseApi.validate().then(success)
-}
-const getLicense = (result: any) => {
-  if (result.status === 'valid') {
-    tipsSuffix.value = result?.license?.edition === 'Embedded' ? '套' : '个账号'
-  }
-  return {
-    status: result.status,
-    corporation: result.license ? result.license.corporation : '',
-    expired: result.license ? result.license.expired : '',
-    count: result.license ? result.license.count : 0,
-    version: result.license ? result.license.version : '',
-    edition: result.license ? result.license.edition : '',
-    serialNo: result.license ? result.license.serialNo : '',
-    remark: result.license ? result.license.remark : '',
-    isv: result.license ? result.license.isv : '',
-  }
-}
-const update = (licKey: string) => {
-  const param = { license_key: licKey }
-  loading.value = true
-  licenseApi.update(param).then((response: any) => {
-    loading.value = false
-    if (response.status === 'valid') {
-      ElMessage.success(t('about.update_success'))
-      const info = getLicense(response)
-      setLicense(info)
-    } else {
-      ElMessage.warning(response.message)
-    }
-  })
-}
 
 const open = () => {
   dialogVisible.value = true
-  getLicenseInfo()
 }
 
 defineExpose({
@@ -138,62 +38,35 @@ defineExpose({
       <img width="368" height="84" :src="aboutBg" />
     </div>
     <div class="content">
-      <div class="item">
-        <div class="label">{{ $t('about.auth_to') }}</div>
-        <div class="value">{{ license.corporation }}</div>
-      </div>
-      <div v-if="license.isv" class="item">
-        <div class="label">ISV</div>
-        <div class="value">{{ license.isv }}</div>
-      </div>
-      <div class="item">
-        <div class="label">{{ $t('about.expiration_time') }}</div>
-        <div class="value" :class="{ 'expired-mark': license.status === 'expired' }">
-          {{ license.expired }}
+      <div class="quote-section">
+        <div class="quote-icon">"</div>
+        <div class="quote-text">
+          <p class="main-quote">
+            数据如同璀璨星辰，散落于浩瀚夜空。
+          </p>
+          <p class="main-quote">
+            智能则是那穿越时空的光，照亮未知，指引方向。
+          </p>
+          <p class="sub-quote">
+            愿每一次探索，都能让洞察更深刻；
+          </p>
+          <p class="sub-quote">
+            愿每一次决策，都能让未来更清晰。
+          </p>
+          <p class="dedication">
+            —— 献给每一位探索数据奥秘的使用者
+          </p>
         </div>
       </div>
-      <div class="item">
-        <div class="label">{{ $t('about.version') }}</div>
-        <div class="value">
-          {{
-            !license?.edition
-              ? $t('about.standard')
-              : license.edition === 'Embedded'
-                ? $t('about.Embedded')
-                : license.edition === 'Professional'
-                  ? $t('about.Professional')
-                  : $t('about.enterprise')
-          }}
+      
+      <div class="version-info">
+        <div class="item">
+          <div class="label">{{ $t('about.version_num') }}</div>
+          <div class="value">{{ build }}</div>
         </div>
-      </div>
-      <div class="item">
-        <div class="label">{{ $t('about.version_num') }}</div>
-        <div class="value">{{ build }}</div>
-      </div>
-      <div class="item">
-        <div class="label">{{ $t('about.serial_no') }}</div>
-        <div class="value">{{ license.serialNo || '-' }}</div>
-      </div>
-      <div class="item">
-        <div class="label">{{ $t('about.remark') }}</div>
-        <div class="value ellipsis">{{ license.remark || '-' }}</div>
-      </div>
-
-      <div v-if="isAdmin" style="margin-top: 24px" class="lic_rooter">
-        <el-upload
-          action=""
-          :multiple="false"
-          :show-file-list="false"
-          :file-list="fileList"
-          accept=".key"
-          name="file"
-          :before-upload="beforeUpload"
-        >
-          <el-button plain> {{ $t('about.update_license') }} </el-button>
-        </el-upload>
       </div>
     </div>
-    <div class="name">2014-2025 版权所有 © 杭州飞致云信息科技有限公司</div>
+    <div class="name">作者：63726部队技术室     周立新   @18169583303</div>
   </el-dialog>
 </template>
 
@@ -223,39 +96,90 @@ defineExpose({
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     border-top: 0;
-    padding: 24px 40px;
+    padding: 40px;
 
-    .item {
-      font-size: 16px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: 24px;
-      margin-bottom: 16px;
-      display: flex;
-      font-weight: 400;
-      .expired-mark {
-        color: red;
-      }
-      .label {
-        color: #646a73;
-        width: 240px;
+    .quote-section {
+      position: relative;
+      padding: 32px 24px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: 12px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+
+      .quote-icon {
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        font-size: 72px;
+        font-weight: bold;
+        color: var(--ed-color-primary, #1cba90);
+        opacity: 0.2;
+        line-height: 1;
       }
 
-      .value {
-        margin-left: 24px;
-        max-width: 448px;
+      .quote-text {
+        position: relative;
+        z-index: 1;
+        
+        p {
+          margin: 0;
+          padding: 0;
+        }
+
+        .main-quote {
+          font-size: 18px;
+          line-height: 32px;
+          color: #1f2329;
+          font-weight: 500;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+
+        .sub-quote {
+          font-size: 16px;
+          line-height: 28px;
+          color: #646a73;
+          margin-bottom: 8px;
+          text-align: center;
+          font-style: italic;
+        }
+
+        .dedication {
+          font-size: 14px;
+          line-height: 24px;
+          color: #8f959e;
+          margin-top: 24px;
+          text-align: right;
+          font-style: italic;
+        }
+      }
+    }
+
+    .version-info {
+      padding: 16px 24px;
+      background: #f8f9fa;
+      border-radius: 8px;
+
+      .item {
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .label {
+          color: #646a73;
+          margin-right: 12px;
+        }
+
+        .value {
+          color: #1f2329;
+          font-weight: 500;
+        }
       }
     }
   }
-}
-.lic_rooter {
-  flex-direction: row;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  align-content: center;
-  width: fit-content;
-  justify-content: space-between;
-  column-gap: 12px;
 }
 </style>
